@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="TrackFlow — живое отслеживание доставок и пробок">
+  <title>TrackFlow — Доставки</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050505'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%23f4f4f2'/%3E%3C/svg%3E">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/cyrillic-400-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/cyrillic-500-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/cyrillic-600-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/cyrillic-700-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/cyrillic-800-normal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-800-normal.css">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-view="seller" data-traffic="mono">
+
+  <!-- Фон -->
+  <div class="bg" aria-hidden="true">
+    <div class="aurora a1"></div>
+    <div class="aurora a2"></div>
+    <div class="aurora a3"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-grain"></div>
+    <div class="bg-vignette"></div>
+  </div>
+
+  <!-- Шапка -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h11v9H1z"/><path d="M12 10h4l3 3v3h-7z"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></svg>
+      </div>
+      <div class="logo-name">TrackFlow</div>
+    </div>
+
+    <nav class="seg" id="top-nav" aria-label="Роли">
+      <span class="seg-thumb" id="seg-thumb"></span>
+      <button class="seg-btn active" data-view="seller" type="button">Продавец</button>
+      <button class="seg-btn" data-view="driver" type="button">Водитель</button>
+      <button class="seg-btn" data-view="admin" type="button">Админ</button>
+    </nav>
+
+    <button class="btn-icon header-add" id="header-add" type="button" title="Новый заказ" aria-label="Новый заказ">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </header>
+
+  <main class="main">
+
+    <!-- ═══════════ ПРОДАВЕЦ ═══════════ -->
+    <section id="view-seller" class="view active">
+      <div class="view-head">
+        <div>
+          <h1>Доставки</h1>
+          <p class="sub">Живая карта заказов, машин и пробок — обновляется каждую секунду</p>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat glass"><div class="stat-value" id="st-total">0</div><div class="stat-label">Активных</div></div>
+        <div class="stat glass"><div class="stat-value" id="st-deliv">0</div><div class="stat-label">В пути</div></div>
+        <div class="stat glass"><div class="stat-value" id="st-arr">0</div><div class="stat-label">Прибыли</div></div>
+        <div class="stat glass"><div class="stat-value" id="st-eta">—</div><div class="stat-label">Средний ETA</div></div>
+      </div>
+
+      <div class="toolbar glass">
+        <label class="field search">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+          <input id="seller-search" type="search" placeholder="Заказ, машина, номер, адрес…" autocomplete="off">
+        </label>
+        <div class="chips" id="seller-chips">
+          <button class="chip active" data-f="all" type="button">Все</button>
+          <button class="chip" data-f="accepted" type="button">Принятые</button>
+          <button class="chip" data-f="delivering" type="button">В пути</button>
+          <button class="chip" data-f="arrived" type="button">Прибыли</button>
+          <button class="chip" data-f="new" type="button">Новые</button>
+        </div>
+        <select class="sel" id="seller-sort" title="Сортировка">
+          <option value="eta">Сначала близкие</option>
+          <option value="progress">По прогрессу</option>
+          <option value="new">Сначала новые</option>
+        </select>
+        <div class="mini-seg" data-traffic-switch title="Отображение пробок">
+          <button class="ms-btn active" data-mode="mono" type="button">Ч/Б</button>
+          <button class="ms-btn" data-mode="color" type="button">Цвет</button>
+        </div>
+        <button class="btn btn-primary" id="btn-new" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Новый заказ
+        </button>
+      </div>
+
+      <div class="legend-row">
+        <span class="lg"><i class="sw sw-free"></i>Свободно</span>
+        <span class="lg"><i class="sw sw-slow"></i>Плотное движение</span>
+        <span class="lg"><i class="sw sw-jam"></i>Пробка</span>
+      </div>
+
+      <div class="grid" id="orders-grid"></div>
+    </section>
+
+    <!-- ═══════════ ВОДИТЕЛЬ ═══════════ -->
+    <section id="view-driver" class="view">
+      <div class="driver-wrap">
+        <div class="map-panel glass">
+          <div id="driver-map" class="map"></div>
+          <div class="gps" id="gps-badge"><span class="gps-dot" id="gps-dot"></span><span id="gps-text">GPS: симуляция</span></div>
+          <div class="map-tools">
+            <div class="mini-seg" data-traffic-switch>
+              <button class="ms-btn active" data-mode="mono" type="button">Ч/Б</button>
+              <button class="ms-btn" data-mode="color" type="button">Цвет</button>
+            </div>
+            <button class="btn-icon" id="btn-center" type="button" title="Центрировать">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+            </button>
+          </div>
+          <div class="speed-chip">
+            <span class="sc-label">Демо</span>
+            <select class="sel-mini" id="speed-sel">
+              <option value="1">×1 реал</option>
+              <option value="10">×10</option>
+              <option value="30" selected>×30</option>
+              <option value="60">×60</option>
+            </select>
+          </div>
+        </div>
+
+        <aside class="side">
+          <div class="glass panel profile">
+            <div class="avatar">АК</div>
+            <div class="profile-info">
+              <div class="p-name">Алексей К.</div>
+              <div class="p-sub" id="me-sub">Hyundai Solaris · А777МР 77</div>
+            </div>
+            <label class="switch" title="Онлайн">
+              <input type="checkbox" id="online-sw" checked>
+              <span class="knob"></span>
+            </label>
+          </div>
+
+          <div class="glass panel">
+            <h3>Текущий заказ</h3>
+            <div id="current-body"></div>
+            <div class="actions" id="current-actions">
+              <button class="btn btn-primary" id="btn-accept" type="button" style="display:none">Принять заказ</button>
+              <button class="btn btn-primary" id="btn-start" type="button" style="display:none">Начать доставку</button>
+              <button class="btn btn-ghost" id="btn-refuse" type="button" style="display:none">Отказаться</button>
+              <button class="btn btn-primary" id="btn-arrived" type="button" style="display:none">Прибыл</button>
+              <button class="btn btn-primary" id="btn-complete" type="button" style="display:none">Завершить заказ</button>
+            </div>
+          </div>
+
+          <div class="glass panel avail">
+            <h3>Доступные заказы <span class="count-badge" id="avail-count">0</span></h3>
+            <div id="avail-list"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ═══════════ АДМИН ═══════════ -->
+    <section id="view-admin" class="view">
+      <div class="view-head">
+        <div>
+          <h1>Панель управления</h1>
+          <p class="sub">Все заказы, водители и показатели сервиса</p>
+        </div>
+        <button class="btn btn-ghost" id="btn-reset" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+          Сбросить демо
+        </button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi glass"><div class="kpi-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></div><div><div class="kpi-val" id="k-orders">0</div><div class="kpi-label">Заказов сегодня</div></div></div>
+        <div class="kpi glass"><div class="kpi-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.6c2.9.3 5.5 2.3 5.5 5.4"/></svg></div><div><div class="kpi-val" id="k-drivers">0</div><div class="kpi-label">Водителей онлайн</div></div></div>
+        <div class="kpi glass"><div class="kpi-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="3"/><path d="M2 10h20M6 15h4"/></svg></div><div><div class="kpi-val" id="k-rev">0</div><div class="kpi-label">Выручка, ₽</div></div></div>
+        <div class="kpi glass"><div class="kpi-ic"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div><div><div class="kpi-val" id="k-eta">—</div><div class="kpi-label">Средний ETA, мин</div></div></div>
+      </div>
+
+      <div class="admin-cols">
+        <div class="glass panel">
+          <h3>Заказы по часам</h3>
+          <div class="chart" id="chart"></div>
+          <div class="chart-x" id="chart-x"></div>
+        </div>
+        <div class="glass panel">
+          <h3>Водители</h3>
+          <div id="drivers-list"></div>
+        </div>
+      </div>
+
+      <div class="glass panel">
+        <div class="table-head">
+          <h3>Все заказы</h3>
+          <label class="field search">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+            <input id="admin-search" type="search" placeholder="Поиск…" autocomplete="off">
+          </label>
+          <select class="sel" id="admin-filter">
+            <option value="all">Все статусы</option>
+            <option value="new">Новые</option>
+            <option value="accepted">Принятые</option>
+            <option value="delivering">Доставляется</option>
+            <option value="arrived">Прибыл</option>
+            <option value="done">Завершён</option>
+          </select>
+        </div>
+        <div class="bulk" id="bulk-bar">
+          <span id="bulk-count">0 выбрано</span>
+          <button class="btn btn-ghost btn-sm" id="bulk-del" type="button">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+            Удалить
+          </button>
+          <button class="btn btn-ghost btn-sm" id="bulk-clear" type="button">Снять</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead id="admin-thead">
+              <tr>
+                <th class="th-check"><input type="checkbox" id="check-all" aria-label="Выбрать все"></th>
+                <th data-sort="id">ID<span class="arr">↕</span></th>
+                <th data-sort="driverName">Водитель<span class="arr">↕</span></th>
+                <th>Маршрут</th>
+                <th data-sort="status">Статус<span class="arr">↕</span></th>
+                <th data-sort="progress">Прогресс<span class="arr">↕</span></th>
+                <th data-sort="price">Цена<span class="arr">↕</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="admin-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Мобильная навигация -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Роли">
+    <button class="bn-btn active" data-view="seller" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>
+      <span>Продавец</span>
+    </button>
+    <button class="bn-btn" data-view="driver" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7h11v9H1z"/><path d="M12 10h4l3 3v3h-7z"/><circle cx="5.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></svg>
+      <span>Водитель</span>
+    </button>
+    <button class="bn-btn" data-view="admin" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h9M17 6h3"/><circle cx="15" cy="6" r="2"/><path d="M4 12h3M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h11M19 18h1"/><circle cx="17" cy="18" r="2"/></svg>
+      <span>Админ</span>
+    </button>
+  </nav>
+
+  <!-- Оверлеи -->
+  <div class="scrim" id="scrim"></div>
+
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Детали заказа">
+    <div class="drawer-handle" aria-hidden="true"></div>
+    <div class="drawer-inner" id="drawer-inner"></div>
+  </aside>
+
+  <div class="modal-root" id="modal-root" role="dialog" aria-modal="true">
+    <div class="modal glass-strong" id="modal-card"></div>
+  </div>
+
+  <div class="toast glass-strong" id="toast" role="status">
+    <span class="toast-ic" id="toast-ic"></span>
+    <span class="toast-msg" id="toast-msg"></span>
+    <button class="btn btn-primary btn-sm toast-act" id="toast-act" type="button" style="display:none"></button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/seller.js"></script>
+  <script src="js/driver.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
